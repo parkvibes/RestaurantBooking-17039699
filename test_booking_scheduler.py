@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 import io
 import sys
 import unittest
+from unittest.mock import Mock
+
 from schedule import *
 from booking_scheduler import *
 
@@ -53,8 +55,20 @@ class BookingSchedulerTest(unittest.TestCase):
         self.bs.add_schedule(Schedule(TIME_OCLOCK + timedelta(hours=1), DEFAULT_CAPACITY, CUSTOMER))
         self.assertEqual(self.stdout.getvalue(), 'Sending SMS to 010-1234-5678 for schedule at 2021-01-01 12:00:00\nSending SMS to 010-1234-5678 for schedule at 2021-01-01 13:00:00\n')
 
+
     def test_normal_check_sms(self):
-        pass
+        self.sms_sender = Mock(spec=SmsSender)
+
+        def send_mock(schedule):
+            print(f"Try to sending SMS to {schedule.get_customer().phone_number} for schedule at {schedule.get_date_time()}")
+
+        self.sms_sender.send.side_effect = send_mock
+
+        self.bs.set_sms_sender(self.sms_sender)
+        self.bs.add_schedule(Schedule(TIME_OCLOCK, DEFAULT_CAPACITY, CUSTOMER))
+
+        self.sms_sender.send.assert_called_once()
+        self.assertEqual(self.stdout.getvalue(), 'Try to sending SMS to 010-1234-5678 for schedule at 2021-01-01 12:00:00\n')
 
     def test_normal_check_email_without_email(self):
         pass
