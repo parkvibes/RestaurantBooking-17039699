@@ -1,13 +1,33 @@
+import datetime
 import unittest
-
+from schedule import *
+from booking_scheduler import *
+def get_date_time(date: str):
+    try:
+        return datetime.strptime(date, '%Y-%m-%d %H:%M')
+    except:
+        raise ValueError('Invalid date format')
 
 class BookingSchedulerTest(unittest.TestCase):
 
     def test_not_oclock(self):
-        pass
+        not_oclock_time = get_date_time('2021-01-01 12:30')
+        customer = Customer('Fake Name', '010-1234-5678')
+        bs = BookingScheduler(3)
+
+        with self.assertRaises(ValueError):
+            bs.add_schedule(Schedule(not_oclock_time, 2, customer))
 
     def test_oclock(self):
-        pass
+        oclock_time = get_date_time('2021-01-01 12:00')
+        customer = Customer('Fake Name', '010-1234-5678')
+        bs = BookingScheduler(3)
+
+        bs.add_schedule(Schedule(oclock_time, 2, customer))
+
+        self.assertEqual("Sending SMS to 010-1234-5678 for schedule at 2021-01-01 12:00:0")
+
+
 
     def test_capacity_overflow(self):
         pass
