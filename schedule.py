@@ -7,6 +7,9 @@ class Customer:
     def get_email(self):
         return self.email
 
+    def set_email(self, email):
+        self.email = email
+
 
 class Schedule:
     def __init__(self, date_time, number_of_people, customer):
