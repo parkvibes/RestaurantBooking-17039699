@@ -47,6 +47,9 @@ class BookingSchedulerTest(unittest.TestCase):
 
         self.email_sender.send_mail.side_effect = send_mail_mock
 
+        self.bs.set_sms_sender(self.sms_sender)
+        self.bs.set_mail_sender(self.email_sender)
+
     def tearDown(self):
         sys.stdout = self.backup_stdout
 
@@ -56,7 +59,8 @@ class BookingSchedulerTest(unittest.TestCase):
 
     def test_oclock(self):
         self.bs.add_schedule(Schedule(TIME_OCLOCK, DEFAULT_CAPACITY - 1, self.CUSTOMER))
-        self.assertEqual(self.stdout.getvalue(), "Sending SMS to 010-1234-5678 for schedule at 2021-01-01 12:00:00\n")
+        self.assertEqual(self.stdout.getvalue(),
+                         "Try to send SMS to 010-1234-5678 for schedule at 2021-01-01 12:00:00\n")
 
     def test_capacity_overflow1(self):
         with self.assertRaises(ValueError):
@@ -71,7 +75,7 @@ class BookingSchedulerTest(unittest.TestCase):
         self.bs.add_schedule(Schedule(TIME_OCLOCK, DEFAULT_CAPACITY, self.CUSTOMER))
         self.bs.add_schedule(Schedule(TIME_OCLOCK + timedelta(hours=1), DEFAULT_CAPACITY, self.CUSTOMER))
         self.assertEqual(self.stdout.getvalue(),
-                         'Sending SMS to 010-1234-5678 for schedule at 2021-01-01 12:00:00\nSending SMS to 010-1234-5678 for schedule at 2021-01-01 13:00:00\n')
+                         'Try to send SMS to 010-1234-5678 for schedule at 2021-01-01 12:00:00\nTry to send SMS to 010-1234-5678 for schedule at 2021-01-01 13:00:00\n')
 
     def test_normal_check_sms(self):
         self.bs.set_sms_sender(self.sms_sender)
@@ -82,18 +86,15 @@ class BookingSchedulerTest(unittest.TestCase):
                          'Try to send SMS to 010-1234-5678 for schedule at 2021-01-01 12:00:00\n')
 
     def test_normal_check_email_without_email(self):
-        self.bs.set_sms_sender(self.sms_sender)
-        self.bs.set_mail_sender(self.email_sender)
-
         self.bs.add_schedule(Schedule(TIME_OCLOCK, DEFAULT_CAPACITY, self.CUSTOMER))
 
         self.sms_sender.send.assert_called_once()
         self.email_sender.send_mail.assert_not_called()
 
-        self.assertEqual(self.stdout.getvalue(), 'Try to send SMS to 010-1234-5678 for schedule at 2021-01-01 12:00:00\n')
+        self.assertEqual(self.stdout.getvalue(),
+                         'Try to send SMS to 010-1234-5678 for schedule at 2021-01-01 12:00:00\n')
 
     def test_normal_check_email_with_email(self):
-
         self.bs.set_sms_sender(self.sms_sender)
         self.bs.set_mail_sender(self.email_sender)
 
@@ -103,13 +104,22 @@ class BookingSchedulerTest(unittest.TestCase):
         self.sms_sender.send.assert_called_once()
         self.email_sender.send_mail.assert_called_once()
 
-        self.assertEqual(self.stdout.getvalue(), 'Try to send SMS to 010-1234-5678 for schedule at 2021-01-01 12:00:00\nTry to Send email to dshw.park@samsung.com for schedule at 2021-01-01 12:00:00\n')
+        self.assertEqual(self.stdout.getvalue(),
+                         'Try to send SMS to 010-1234-5678 for schedule at 2021-01-01 12:00:00\nTry to Send email to dshw.park@samsung.com for schedule at 2021-01-01 12:00:00\n')
 
     def test_sunday(self):
-        pass
+        self.bs.set_system_day(get_date_time('2020-12-27 12:00'))
+
+        with self.assertRaises(ValueError):
+            self.bs.add_schedule(Schedule(TIME_OCLOCK, DEFAULT_CAPACITY, self.CUSTOMER))
 
     def test_non_sunday(self):
-        pass
+        self.bs.set_system_day(TIME_OCLOCK)
+
+        self.bs.add_schedule(Schedule(TIME_OCLOCK, DEFAULT_CAPACITY, self.CUSTOMER))
+
+        self.assertEqual(self.stdout.getvalue(),
+                         'Try to send SMS to 010-1234-5678 for schedule at 2021-01-01 12:00:00\n')
 
 
 if __name__ == '__main__':
