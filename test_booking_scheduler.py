@@ -1,9 +1,10 @@
-import datetime
+from datetime import datetime, timedelta
 import io
 import sys
 import unittest
 from schedule import *
 from booking_scheduler import *
+
 
 
 def get_date_time(date: str):
@@ -38,11 +39,19 @@ class BookingSchedulerTest(unittest.TestCase):
         self.bs.add_schedule(Schedule(TIME_OCLOCK, DEFAULT_CAPACITY - 1, CUSTOMER))
         self.assertEqual(self.stdout.getvalue(), "Sending SMS to 010-1234-5678 for schedule at 2021-01-01 12:00:00\n")
 
-    def test_capacity_overflow(self):
-        pass
+    def test_capacity_overflow1(self):
+        with self.assertRaises(ValueError):
+            self.bs.add_schedule(Schedule(TIME_OCLOCK, DEFAULT_CAPACITY + 1, CUSTOMER))
+
+    def test_capacity_overflow2(self):
+        self.bs.add_schedule(Schedule(TIME_OCLOCK, DEFAULT_CAPACITY, CUSTOMER))
+        with self.assertRaises(ValueError):
+            self.bs.add_schedule(Schedule(TIME_OCLOCK, DEFAULT_CAPACITY, CUSTOMER))
 
     def test_normal(self):
-        pass
+        self.bs.add_schedule(Schedule(TIME_OCLOCK, DEFAULT_CAPACITY, CUSTOMER))
+        self.bs.add_schedule(Schedule(TIME_OCLOCK + timedelta(hours=1), DEFAULT_CAPACITY, CUSTOMER))
+        self.assertEqual(self.stdout.getvalue(), 'Sending SMS to 010-1234-5678 for schedule at 2021-01-01 12:00:00\nSending SMS to 010-1234-5678 for schedule at 2021-01-01 13:00:00\n')
 
     def test_normal_check_sms(self):
         pass
