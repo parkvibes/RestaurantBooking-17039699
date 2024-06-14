@@ -11,7 +11,6 @@ class BookingScheduler:
         self.schedules = []
         self.sms_sender = SmsSender()
         self.mail_sender = MailSender()
-        self.system_day = None
 
     def add_schedule(self, schedule: Schedule):
         if schedule.get_date_time().minute != 0:
@@ -24,8 +23,8 @@ class BookingScheduler:
         if numberOfPeople > self.capacity_per_hour:
             raise ValueError("Number of people is over restaurant capacity per hour")
 
-        #일요일에는 시스템을 오픈하지 않는다.
-        now = self.system_day if self.system_day is not None else datetime.now()
+        # 일요일에는 시스템을 오픈하지 않는다.
+        now = self.get_system_day()
         if now.weekday() == 6:  # datetime 모듈에서 일요일은 6
             raise ValueError("Booking system is not available on Sunday")
 
@@ -43,5 +42,5 @@ class BookingScheduler:
     def set_mail_sender(self, mail_sender):
         self.mail_sender = mail_sender
 
-    def set_system_day(self, day):
-        self.system_day = day
+    def get_system_day(self):
+        return datetime.now()

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import io
 import sys
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from schedule import *
 from booking_scheduler import *
@@ -107,15 +107,13 @@ class BookingSchedulerTest(unittest.TestCase):
         self.assertEqual(self.stdout.getvalue(),
                          'Try to send SMS to 010-1234-5678 for schedule at 2021-01-01 12:00:00\nTry to Send email to dshw.park@samsung.com for schedule at 2021-01-01 12:00:00\n')
 
-    def test_sunday(self):
-        self.bs.set_system_day(get_date_time('2020-12-27 12:00'))
-
+    @patch.object(BookingScheduler, 'get_system_day', return_value=get_date_time('2020-12-27 12:00'))
+    def test_sunday(self, mock_get_system_day):
         with self.assertRaises(ValueError):
             self.bs.add_schedule(Schedule(TIME_OCLOCK, DEFAULT_CAPACITY, self.CUSTOMER))
 
-    def test_non_sunday(self):
-        self.bs.set_system_day(TIME_OCLOCK)
-
+    @patch.object(BookingScheduler, 'get_system_day', return_value=TIME_OCLOCK)
+    def test_non_sunday(self, mock_get_system_days):
         self.bs.add_schedule(Schedule(TIME_OCLOCK, DEFAULT_CAPACITY, self.CUSTOMER))
 
         self.assertEqual(self.stdout.getvalue(),
