@@ -26,9 +26,16 @@ class BookingSchedulerTest(unittest.TestCase):
 
     def setUp(self):
         self.bs = BookingScheduler(DEFAULT_CAPACITY)
+
         self.backup_stdout = sys.stdout
         self.stdout = io.StringIO()
         sys.stdout = self.stdout
+
+        self.sms_sender = Mock(spec=SmsSender)
+        def send_mock(schedule):
+            print(
+                f"Try to sending SMS to {schedule.get_customer().phone_number} for schedule at {schedule.get_date_time()}")
+        self.sms_sender.send.side_effect = send_mock
 
     def tearDown(self):
         sys.stdout = self.backup_stdout
@@ -57,13 +64,6 @@ class BookingSchedulerTest(unittest.TestCase):
 
 
     def test_normal_check_sms(self):
-        self.sms_sender = Mock(spec=SmsSender)
-
-        def send_mock(schedule):
-            print(f"Try to sending SMS to {schedule.get_customer().phone_number} for schedule at {schedule.get_date_time()}")
-
-        self.sms_sender.send.side_effect = send_mock
-
         self.bs.set_sms_sender(self.sms_sender)
         self.bs.add_schedule(Schedule(TIME_OCLOCK, DEFAULT_CAPACITY, CUSTOMER))
 
